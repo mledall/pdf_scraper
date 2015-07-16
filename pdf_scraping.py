@@ -5,19 +5,17 @@
 # Our aim for this program eventually is the following. We want to input PRD pdf files, get their PACS number, and teach a classifier to predict the PACS number for a new file.
 # The way we will go about this is to input a few PRD files, create a bag of words, and store the PACS numbers for each. This will be our training data
 
-
+from bs4 import BeautifulSoup
 from cStringIO import StringIO
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 import re
+from nltk.corpus import stopwords
 
 # This will convert an imported input_file.pdf, and creates an out_put.txt file
 def convert(input_file, pages=None):
-	'''
-	Converts a PDF file to blahblah
-	'''
 	open_file = input_file+'.pdf'
 	if not pages:
 		pagenums = set()
@@ -38,6 +36,7 @@ def convert(input_file, pages=None):
 	with open(output_file, 'w') as f:	# 'w' for overwriting, and 'a' to not overwrite
 		f.write('%s' % text)
 	f.close()
+	return text
 
 # Takes as an input a .pdf file, and outputs the doi
 def doi_finder(search_file, generate_txt):
@@ -49,7 +48,7 @@ def doi_finder(search_file, generate_txt):
 		searchlines = f.readlines()
 	for i, line in enumerate(searchlines):
 		if search_phrase in line.lower():
-			string = searchlines[i].lower()#[-18:-1:1]		
+			string = searchlines[i]#.lower()[-18:-1:1]		
 	for i,j  in enumerate(string):
 		if j is ' ':
 			string = string[i:i+27]
@@ -67,26 +66,59 @@ def pacs_finder(search_file, generate_txt):
 		searchlines = f.readlines()
 	for i, line in enumerate(searchlines):
 		if search_phrase in line.lower():
-			string = searchlines[i].lower()[14:]
-	string = re.sub("[^0-9a-zA-Z.+-]",           	# The pattern to search for; ^ means NOT
+			string = searchlines[i][14:]#.lower()
+	string = re.sub("[^0-9a-zA-Z.+-,]",           	# The pattern to search for; ^ means NOT
                   			"",                   	# The pattern to replace it with
                           	string )              	# The text to search
+	return string.split(',')
+'''
+	print string.split(',')	
 	list_pacs = []
 	n = 0
 	for i in range(len(string[::8])):
 		list_pacs.append(string[n:n+8])
 		n = n+8
-	return list_pacs
+'''
 
 
-print doi_finder('Lutz', generate_txt = 'yes')
-print pacs_finder('Lutz', generate_txt = 'no')
+
+print doi_finder('Matthias', generate_txt = 'no')
+print pacs_finder('Matthias', generate_txt = 'no')
 
 
-# This function will take a bunch of input files, extract useful info, and create a bag of words from which to learn.
+# The following function will take as input the scraped pdf, and will clean it, i.e. keeping the info we want to learn from
+def clean_pdf( search_file ):
+	text = convert( search_file , pages=None)
+#	search_file = 'scraped_'+search_file+'.txt'
+#	with open(search_file, "r") as f:
+#		searchlines = f.readlines()
+	rm_symbol = BeautifulSoup(text).get_text()
+	letters_only = re.sub("[^a-zA-Z]", " ", rm_symbol )
+	lower_case = letters_only.lower()
+	words = lower_case.split()
+	stops = set(stopwords.words("english"))
+	meaningful_words = [w for w in words if not w in stops]
+	meaningful_text = ' '.join(meaningful_words)
+	print meaningful_text
 
-#def Bag_of_words():
-	
+
+#clean_pdf( 'Matthias' )
+
+
+# The following function will actually learn the bag of words.
+def Bag_of_Words(cleaned_reviews, n_features = 5000):
+	vectorizer = CountVectorizer(analyzer = "word",
+                             tokenizer = None,    	# Allows to tokenize
+                             preprocessor = None, 	# Allows to do some preprocessing
+                             stop_words = None,   	# We could remove stopwords from here
+                             max_features = n_features) 	# Chooses a given number of words, just a subset of the huge total number of words.
+	# fit_transform() does two functions: First, it fits the model
+	# and learns the vocabulary; second, it transforms our training data
+	# into feature vectors. The input to fit_transform should be a list of 
+	# strings.
+	data_features = vectorizer.fit_transform(cleaned_reviews)
+	data_features = data_features.toarray()
+	return data_features, vectorizer
 
 
 # Following was the first code I was using. It uses a different library to scrape the pdf, though it does not work as well, I abandoned it.
