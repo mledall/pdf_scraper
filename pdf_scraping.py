@@ -4,6 +4,7 @@
 
 # Our aim for this program eventually is the following. We want to input PRD pdf files, get their PACS number, and teach a classifier to predict the PACS number for a new file.
 # The way we will go about this is to input a few PRD files, create a bag of words, and store the PACS numbers for each. This will be our training data
+
 import numpy as np
 from bs4 import BeautifulSoup
 from cStringIO import StringIO
@@ -15,6 +16,10 @@ import re
 from nltk.corpus import stopwords
 from nltk.corpus import words
 from sklearn.feature_extraction.text import CountVectorizer
+
+# This is the set of papers we are using to generate the bag of words. We are only using those papers that can be converting (e.g. not Luty), and wich have a PACS number (e.g. not Gronau)
+set_of_papers = ['Ahriche', 'Anastassov', 'Carrington', 'Farzan', 'Hisano', 'Ibrahim', 'Lutz', 'Matthias', 'Pilaftsis', 'Pilaftsis2', 'Pospelov', 'Vives', 'Zimdahl']
+
 
 # This will convert an imported input_file.pdf, and creates an out_put.txt file
 def convert(input_file, pages=None):
@@ -40,25 +45,25 @@ def convert(input_file, pages=None):
 	f.close()
 	return text
 
-# Takes as an input a .pdf file, and outputs the doi and PACS numbers
+# Takes as an input a .pdf file, and outputs the doi and PACS numbers. Keep in mind that the doi is not always present in PRD papers. In that case looking for a doi will cause an error
 def doi_pacs_finder(search_file, generate_txt):
 	if generate_txt is 'yes':
 		convert(search_file, pages=None)
 	search_file = 'scraped_'+search_file+'.txt'
-	search_doi = 'doi:'
-	search_pacs = 'pacs numbers:'
+#	search_doi = 'doi:'
+	search_pacs = 'pacs number'
 	with open(search_file, "r") as f:
 		searchlines = f.readlines()
 	for i, line in enumerate(searchlines):
-		if search_doi in line.lower():
-			doi_string = searchlines[i]
+#		if search_doi in line.lower():
+#			doi_string = searchlines[i]
 		if search_pacs in line.lower():
-			pacs_string = searchlines[i]#[14:]
+			pacs_string = searchlines[i]
 	pacs_string = re.sub("[^0-9a-zA-Z.+-,:]", "", pacs_string )
 	pacs_string = pacs_string.split(':')[1:][0]
-	doi_string = re.sub("[ \n]", "", doi_string)
-	print 'DOI: {},\nPACS: {}'.format(doi_string.split(':')[1], pacs_string.split(','))
-	return doi_string.split(':')[1], pacs_string.split(',')
+#	doi_string = re.sub("[\n ]", "", doi_string )
+#	print 'DOI: {},\nPACS: {}'.format(doi_string.split(':')[1], pacs_string.split(','))
+	return pacs_string.split(',')	#doi_string.split(':')[1], 
 '''
 	print string.split(',')	
 	list_pacs = []
@@ -67,6 +72,10 @@ def doi_pacs_finder(search_file, generate_txt):
 		list_pacs.append(string[n:n+8])
 		n = n+8
 '''
+
+
+#print doi_pacs_finder( 'Luty' , generate_txt = 'no')
+#print convert( 'Luty' , pages=None)
 
 
 # The following function will take as input the scraped pdf, and will clean it, i.e. keeping the info we want to learn from
@@ -89,10 +98,16 @@ def clean_pdf( search_file ):
 	return meaningful_text
 
 
+# The following function imports the files, and clean them one by one, and returns a set of all cleaned papers. Right now I am renaming and entering the files by manually, but one day I will code a function that goes to the specified folder, looks at the files, renames them, and do everything else.
 def cleaned_papers():
 	cleaned_papers = []
-	cleaned_papers.append(clean_pdf( 'Matthias' ))
-	cleaned_papers.append(clean_pdf( 'Farzan' ))
+	print '- Scraping pdf\'s, cleaning the texts, and creating the Bag of words'
+	for i in range(len(set_of_papers)):
+		print ' -- {}: Scraping paper {}'.format(i, set_of_papers[i])
+		convert(set_of_papers[i], pages=None)
+		print ' -- Cleaning paper {}'.format(set_of_papers[i])
+		cleaned_papers.append(clean_pdf( set_of_papers[i] ))
+		print ' -- PACS: {}'.format(doi_pacs_finder( set_of_papers[i], generate_txt = 'no'))
 	return cleaned_papers
 
 # The following function will actually create the bag of words. I think we ought to make a bag of words of all the words that appear across all papers, not just one bag per paper. (This is the technique that was used for the bag of words of the movie reviews.)
@@ -124,11 +139,13 @@ def word_count():
 	    print '{}: {}'.format(count, tag)
 
 def main_function():
-#	doi_pacs_finder('Matthias', generate_txt = 'yes')
-	print clean_pdf( 'Matthias' )
+#	set_of_papers = ['Ahriche', 'Anastassov', 'Carrington', 'Farzan', 'Hisano', 'Ibrahim', 'Luty', 'Lutz', 'Matthias', 'Pilaftsis', 'Pilaftsis2', 'Pospelov', 'Vives', 'Zimdahl']
+#	doi_pacs_finder('Ahriche', generate_txt = 'no')[0]
+#	print '{},{}'.format(doi_pacs_finder('Ahriche', generate_txt = 'no')[0], doi_pacs_finder('Ahriche', generate_txt = 'no')[1])
+#	print clean_pdf( 'Matthias' )
 #	print Bag_of_Words( cleaned_papers() )
 #	print cleaned_papers()[1]
-#	word_count()
+	word_count()
 
 main_function()
 
