@@ -67,15 +67,12 @@ def doi_pacs_finder(search_file, generate_txt):
 		n = n+8
 '''
 
-#doi_pacs_finder('Matthias', generate_txt = 'yes')
-
 
 # The following function will take as input the scraped pdf, and will clean it, i.e. keeping the info we want to learn from
 def clean_pdf( search_file ):
-	text = convert( search_file , pages=None)
-#	search_file = 'scraped_'+search_file+'.txt'
-#	with open(search_file, "r") as f:
-#		searchlines = f.readlines()
+	search_file = 'scraped_'+search_file+'.txt'
+	file = open(search_file, 'r')
+	text = file.read()
 	text_only = BeautifulSoup(text).get_text()
 	rm_symbol = re.sub(r'[^\w]', ' ', text_only)
 	letters_only = re.sub("[^a-zA-Z]", " ", rm_symbol )
@@ -89,10 +86,6 @@ def clean_pdf( search_file ):
 #	meaningful_words = words - stops
 	meaningful_text = ' '.join(meaningful_words)
 	print meaningful_text
-
-#words = words.words()
-#print words[-2:]
-clean_pdf( 'Farzan' )
 
 
 # The following function will actually learn the bag of words.
@@ -109,6 +102,13 @@ def Bag_of_Words(cleaned_reviews, n_features = 5000):
 	data_features = vectorizer.fit_transform(cleaned_reviews)
 	data_features = data_features.toarray()
 	return data_features, vectorizer
+
+
+def main_function():
+	clean_pdf( 'Farzan' )
+	#doi_pacs_finder('Matthias', generate_txt = 'yes')
+
+main_function()
 
 
 # Following was the first code I was using. It uses a different library to scrape the pdf, though it does not work as well, I abandoned it.
