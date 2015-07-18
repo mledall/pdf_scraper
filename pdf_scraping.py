@@ -4,7 +4,7 @@
 
 # Our aim for this program eventually is the following. We want to input PRD pdf files, get their PACS number, and teach a classifier to predict the PACS number for a new file.
 # The way we will go about this is to input a few PRD files, create a bag of words, and store the PACS numbers for each. This will be our training data
-
+import numpy as np
 from bs4 import BeautifulSoup
 from cStringIO import StringIO
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
@@ -14,6 +14,7 @@ from pdfminer.pdfpage import PDFPage
 import re
 from nltk.corpus import stopwords
 from nltk.corpus import words
+from sklearn.feature_extraction.text import CountVectorizer
 
 # This will convert an imported input_file.pdf, and creates an out_put.txt file
 def convert(input_file, pages=None):
@@ -81,15 +82,22 @@ def clean_pdf( search_file ):
 	stops = set(stopwords.words("english"))
 	english_words = words.words()
 	rm_stopwords = [w for w in words_text if not w in stops]
-	meaningful_words = [w for w in rm_stopwords if w in english_words]	# In order to select the meaningful words, we can either select those that belong to the english dictionary, or instead suppress those that belong to the dictionary, in this way only those terms specific to the subject will count.
+#	meaningful_words = [w for w in rm_stopwords if w in english_words]	# In order to select the meaningful words, we can either select those that belong to the english dictionary, or instead suppress those that belong to the dictionary, in this way only those terms specific to the subject will count.
 # This made me realize, this is an awesome way of fixing typos, look for those words that DO NOT belong to the dictionary!
 #	meaningful_words = words - stops
-	meaningful_text = ' '.join(meaningful_words)
-	print meaningful_text
+	meaningful_text = ' '.join(rm_stopwords)#meaningful_words
+	return meaningful_text
 
 
-# The following function will actually learn the bag of words.
-def Bag_of_Words(cleaned_reviews, n_features = 5000):
+def cleaned_papers():
+	cleaned_papers = []
+	cleaned_papers.append(clean_pdf( 'Matthias' ))
+	cleaned_papers.append(clean_pdf( 'Farzan' ))
+	return cleaned_papers
+
+# The following function will actually create the bag of words. I think we ought to make a bag of words of all the words that appear across all papers, not just one bag per paper. (This is the technique that was used for the bag of words of the movie reviews.)
+def Bag_of_Words(cleaned_papers, n_features = 5000):
+#	text = clean_pdf( search_file )
 	vectorizer = CountVectorizer(analyzer = "word",
                              tokenizer = None,    	# Allows to tokenize
                              preprocessor = None, 	# Allows to do some preprocessing
@@ -99,14 +107,28 @@ def Bag_of_Words(cleaned_reviews, n_features = 5000):
 	# and learns the vocabulary; second, it transforms our training data
 	# into feature vectors. The input to fit_transform should be a list of 
 	# strings.
-	data_features = vectorizer.fit_transform(cleaned_reviews)
+	data_features = vectorizer.fit_transform(cleaned_papers)
 	data_features = data_features.toarray()
 	return data_features, vectorizer
 
+# Counts the words that appear in the reviews
+def word_count():
+#	raw_train_data = train_data_import()
+#	N_articles = 2000#len(raw_train_data["review"][:])
+	papers = cleaned_papers()
+	train_data_features, vectorizer = Bag_of_Words(papers)
+	vocab = vectorizer.get_feature_names()
+	dist = np.sum(train_data_features, axis=0)
+	word_count = sorted(zip(dist,vocab),reverse = False)
+	for count, tag in word_count:
+	    print '{}: {}'.format(count, tag)
 
 def main_function():
-	clean_pdf( 'Farzan' )
-	#doi_pacs_finder('Matthias', generate_txt = 'yes')
+#	doi_pacs_finder('Matthias', generate_txt = 'yes')
+	print clean_pdf( 'Matthias' )
+#	print Bag_of_Words( cleaned_papers() )
+#	print cleaned_papers()[1]
+#	word_count()
 
 main_function()
 
