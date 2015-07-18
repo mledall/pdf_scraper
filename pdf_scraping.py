@@ -13,6 +13,7 @@ from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 import re
 from nltk.corpus import stopwords
+from nltk.corpus import words
 
 # This will convert an imported input_file.pdf, and creates an out_put.txt file
 def convert(input_file, pages=None):
@@ -66,9 +67,7 @@ def doi_pacs_finder(search_file, generate_txt):
 		n = n+8
 '''
 
-
-
-doi_pacs_finder('Matthias', generate_txt = 'no')
+#doi_pacs_finder('Matthias', generate_txt = 'yes')
 
 
 # The following function will take as input the scraped pdf, and will clean it, i.e. keeping the info we want to learn from
@@ -77,17 +76,23 @@ def clean_pdf( search_file ):
 #	search_file = 'scraped_'+search_file+'.txt'
 #	with open(search_file, "r") as f:
 #		searchlines = f.readlines()
-	rm_symbol = BeautifulSoup(text).get_text()
+	text_only = BeautifulSoup(text).get_text()
+	rm_symbol = re.sub(r'[^\w]', ' ', text_only)
 	letters_only = re.sub("[^a-zA-Z]", " ", rm_symbol )
 	lower_case = letters_only.lower()
-	words = lower_case.split()
+	words_text = set(lower_case.split())
 	stops = set(stopwords.words("english"))
-	meaningful_words = [w for w in words if not w in stops]
+	english_words = words.words()
+	rm_stopwords = [w for w in words_text if not w in stops]
+	meaningful_words = [w for w in rm_stopwords if w in english_words]	# In order to select the meaningful words, we can either select those that belong to the english dictionary, or instead suppress those that belong to the dictionary, in this way only those terms specific to the subject will count.
+# This made me realize, this is an awesome way of fixing typos, look for those words that DO NOT belong to the dictionary!
+#	meaningful_words = words - stops
 	meaningful_text = ' '.join(meaningful_words)
 	print meaningful_text
 
-
-#clean_pdf( 'Matthias' )
+#words = words.words()
+#print words[-2:]
+clean_pdf( 'Farzan' )
 
 
 # The following function will actually learn the bag of words.
