@@ -38,39 +38,24 @@ def convert(input_file, pages=None):
 	f.close()
 	return text
 
-# Takes as an input a .pdf file, and outputs the doi
-def doi_finder(search_file, generate_txt):
+# Takes as an input a .pdf file, and outputs the doi and PACS numbers
+def doi_pacs_finder(search_file, generate_txt):
 	if generate_txt is 'yes':
 		convert(search_file, pages=None)
 	search_file = 'scraped_'+search_file+'.txt'
-	search_phrase = 'doi:'
+	search_doi = 'doi:'
+	search_pacs = 'pacs numbers: '
 	with open(search_file, "r") as f:
 		searchlines = f.readlines()
 	for i, line in enumerate(searchlines):
-		if search_phrase in line.lower():
-			string = searchlines[i]#.lower()[-18:-1:1]		
-	for i,j  in enumerate(string):
-		if j is ' ':
-			string = string[i:i+27]
-	string = re.sub("[ \n]", "", string)
-	f.close()
-	return string
-
-# Takes as an input a .pdf file, and outputs the PACS numbers in a list
-def pacs_finder(search_file, generate_txt):
-	if generate_txt is 'yes':
-		convert(search_file, pages=None)
-	search_file = 'scraped_'+search_file+'.txt'
-	search_phrase = 'pacs numbers: '
-	with open(search_file, "r") as f:
-		searchlines = f.readlines()
-	for i, line in enumerate(searchlines):
-		if search_phrase in line.lower():
-			string = searchlines[i][14:]#.lower()
-	string = re.sub("[^0-9a-zA-Z.+-,]",           	# The pattern to search for; ^ means NOT
-                  			"",                   	# The pattern to replace it with
-                          	string )              	# The text to search
-	return string.split(',')
+		if search_doi in line.lower():
+			doi_string = searchlines[i]
+		if search_pacs in line.lower():
+			pacs_string = searchlines[i][14:]
+	pacs_string = re.sub("[^0-9a-zA-Z.+-,]", "", pacs_string )
+	doi_string = re.sub("[ \n]", "", doi_string)
+	print 'doi: {},\nPACS: {}'.format(doi_string.split(':')[1], pacs_string.split(','))
+	return doi_string.split(':')[1], pacs_string.split(',')
 '''
 	print string.split(',')	
 	list_pacs = []
@@ -82,8 +67,7 @@ def pacs_finder(search_file, generate_txt):
 
 
 
-print doi_finder('Matthias', generate_txt = 'no')
-print pacs_finder('Matthias', generate_txt = 'no')
+doi_pacs_finder('Matthias', generate_txt = 'no')
 
 
 # The following function will take as input the scraped pdf, and will clean it, i.e. keeping the info we want to learn from
