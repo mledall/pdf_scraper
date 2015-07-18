@@ -44,17 +44,18 @@ def doi_pacs_finder(search_file, generate_txt):
 		convert(search_file, pages=None)
 	search_file = 'scraped_'+search_file+'.txt'
 	search_doi = 'doi:'
-	search_pacs = 'pacs numbers: '
+	search_pacs = 'pacs numbers:'
 	with open(search_file, "r") as f:
 		searchlines = f.readlines()
 	for i, line in enumerate(searchlines):
 		if search_doi in line.lower():
 			doi_string = searchlines[i]
 		if search_pacs in line.lower():
-			pacs_string = searchlines[i][14:]
-	pacs_string = re.sub("[^0-9a-zA-Z.+-,]", "", pacs_string )
+			pacs_string = searchlines[i]#[14:]
+	pacs_string = re.sub("[^0-9a-zA-Z.+-,:]", "", pacs_string )
+	pacs_string = pacs_string.split(':')[1:][0]
 	doi_string = re.sub("[ \n]", "", doi_string)
-	print 'doi: {},\nPACS: {}'.format(doi_string.split(':')[1], pacs_string.split(','))
+	print 'DOI: {},\nPACS: {}'.format(doi_string.split(':')[1], pacs_string.split(','))
 	return doi_string.split(':')[1], pacs_string.split(',')
 '''
 	print string.split(',')	
