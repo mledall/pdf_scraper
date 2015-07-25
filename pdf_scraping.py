@@ -18,7 +18,7 @@ from nltk.corpus import words
 from sklearn.feature_extraction.text import CountVectorizer
 
 import os
-
+print hello
 path = '/home/matthias/Documents/Machine_learning/pdf_scraping'
 pdf_files = []
 
