@@ -17,8 +17,36 @@ from nltk.corpus import stopwords
 from nltk.corpus import words
 from sklearn.feature_extraction.text import CountVectorizer
 
-# This is the set of papers we are using to generate the bag of words. We are only using those papers that can be converting (e.g. not Luty), and wich have a PACS number (e.g. not Gronau)
-set_of_papers = ['Ahriche', 'Anastassov', 'Carrington', 'Farzan', 'Hisano', 'Ibrahim', 'Lutz', 'Matthias', 'Pilaftsis', 'Pilaftsis2', 'Pospelov', 'Vives', 'Zimdahl']
+import os
+
+path = '/home/matthias/Documents/Machine_learning/pdf_scraping'
+pdf_files = []
+
+
+# List all of the .pdf files in the folder
+def list_files(path):
+	for file in os.listdir(path):
+		if file.endswith(".pdf"):
+			pdf_files.append(file)
+	return pdf_files
+
+# Renames all of the .pdf files in the folder to the appropriate format to be learnt from
+def rename_files(path):
+	pdf_files = list_files(path)
+	for i in range(len(pdf_files)):
+		foo = open(pdf_files[i], 'r')
+		fname = foo.name
+		if ' ' in fname:
+			print '%s%d' % (fname.split(' ')[0], i)
+			n = '%d' % i
+			print fname.split()[0]+'.pdf'
+			os.rename(fname, fname.split(' ')[0]+'.pdf')
+		foo.close()
+
+rename_files(path)
+
+# This is the set of papers we are using to generate the bag of words. We are only using those papers that can be converting (e.g. not Luty, Baym, Barr, Mohapatra,...), and wich have a PACS number (e.g. not Boixo, Gronau, Wilczek,....)
+set_of_papers = ['Aaij','Adam','Aguado','Ahriche','Altmannshofer','Altmannshofer2', 'Anastassov','Anton','Baker','Cacciapaglia','Carrington','Czarnecki','Dib','de_Sousa','de_Sousa2','Dzuba','Faoro', 'Farzan','Griffith', 'Hisano', 'Ibrahim','Klinovaja','Lanting', 'Lutz','Maiezza', 'Matthias', 'Pilaftsis', 'Pilaftsis2','Pilaftsis3', 'Pospelov','Pospelov2','Regan', 'Vives', 'Zimdahl']
 
 
 # This will convert an imported input_file.pdf, and creates an out_put.txt file
@@ -59,7 +87,7 @@ def doi_pacs_finder(search_file, generate_txt):
 #			doi_string = searchlines[i]
 		if search_pacs in line.lower():
 			pacs_string = searchlines[i]
-	pacs_string = re.sub("[^0-9a-zA-Z.+-,:]", "", pacs_string )
+	pacs_string = re.sub("[^0-9a-zA-Z.+-,:]", "", pacs_string )	#[\n ]
 	pacs_string = pacs_string.split(':')[1:][0]
 #	doi_string = re.sub("[\n ]", "", doi_string )
 #	print 'DOI: {},\nPACS: {}'.format(doi_string.split(':')[1], pacs_string.split(','))
@@ -73,7 +101,7 @@ def doi_pacs_finder(search_file, generate_txt):
 		n = n+8
 '''
 
-
+#\u2010\u2011\u2012\u2013\u2014\u2015
 #print doi_pacs_finder( 'Luty' , generate_txt = 'no')
 #print convert( 'Luty' , pages=None)
 
@@ -150,7 +178,39 @@ def main_function():
 main_function()
 
 
+# piece of code that will be helpful later to read and rename the files automatically.
+'''
+import os
+
+foo = open("foo.txt", 'wb')
+print '%s' % foo.name 
+foo.write('That is an interesting file!\n')
+foo.write('Yeah no kidding!')
+foo.close()
+
+foo = open("foo.txt", 'r')
+tezt = foo.read()
+print tezt
+os.rename('foo.txt', 'bew_foo.txt')
+foo.close()
+
+#print os.path.abspath("pdf_scraping/myfile.txt")
+path = '/home/matthias/Documents/Machine_learning/pdf_scraping'
+
+#print os.listdir(path)
+
+pdf_files = []
+
+for file in os.listdir(path):
+    if file.endswith(".pdf"):
+        pdf_files.append(file)
+
+print len(pdf_files), pdf_files
+'''
+
+
 # Following was the first code I was using. It uses a different library to scrape the pdf, though it does not work as well, I abandoned it.
+
 '''
 import pdfquery
 import pdfminer
